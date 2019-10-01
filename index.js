@@ -6,19 +6,10 @@ import sequelize from "./db/db";
 
 var app = express();
 
-sequelize
-  .authenticate()
-  .then(() => {
-    console.log("Connection has been established successfully.");
-  })
-  .catch(err => {
-    console.error("Unable to connect to the database:", err);
-  });
-
 app.use(bodyParser({ extended: true }));
 
 app.use("/", index_router);
 
 module.exports = app;
 
-app.listen(5000);
+app.listen(3000);
