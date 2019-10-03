@@ -1,7 +1,7 @@
-import express from "express";
-import users from "../db/users";
-import tasks from "../db/tasks";
-var md5 = require("nodejs-md5");
+import express from "express"
+import users from "../db/users"
+import tasks from "../db/tasks"
+import md5 from nodejs-md5
 
 var router = express.Router();
 
@@ -13,26 +13,18 @@ router.post("/signup", async function(req, res) {
       raw: true
     });
     if (!user_data) {
-      var pass;
-      await md5.string(password, function(err, md5) {
-        console.log(md5);
-        pass = md5;
-      });
-      console.log(pass);
-      console.log(password);
-      return false;
       const data = await users.create({
         email: email,
         name: name,
         pass: password
-      });
+      })
 
       return res.status(200).json({
         message: "User Created",
         id: data.id
-      });
+      })
     } else {
-      throw new Error("Email already exists");
+      throw new Error("Email already exists")
     }
   } catch (error) {
     return res.status(201).json({ error: error.message });
@@ -40,32 +32,87 @@ router.post("/signup", async function(req, res) {
 });
 
 router.post("/login", async function(req, res) {
-  const { email, password } = req.body;
+  const { email, password } = req.body
   try {
-    var pass;
-    await md5.string(password, function(err, md5) {
-      pass = md5;
-    });
     const check_user = await users.findOne({
-      where: { email, pass },
+      where: { email, password },
       raw: true
-    });
+    })
 
     if (!check_user) {
       throw new error("Invalid credentials");
     }
 
-    tasks_list = await tasks.findAll({
+    const tasks_list = await tasks.findAll({
       where: {
         user_id: check_user.id
       }
-    });
-    console.log(tasks_list);
-    return false;
-    return res.status(200).json({ tasks_list });
+    })
+    return res.status(200).json({ tasks_list })
   } catch (error) {
-    return res.status(201).json({ error: error.message });
+    return res.status(201).json({ error: error.message })
   }
 });
 
+router.get("/task", async function(req, res) {
+  const { user_id, status } = req.query
+
+  try {
+    const tasks_list = await tasks.findAll({
+      where: {
+        user_id,
+        status
+      }
+    })
+
+    return res.status(200).json({
+      message: "Task List",
+      data: tasks_list
+    })
+  } catch (error) {
+    return res.status(201).json({ error: error.message })
+  }
+});
+
+router.post("/task", async function(req, res) {
+  const { name, description, user_id } = req.body
+
+  try {
+    const save_task = await tasks.create({
+      task_name: name,
+      task_description: description,
+      user_id: user_id
+    })
+
+    return res.status(200).json({
+      message: "Task is added",
+      id: save_task.id
+    })
+  } catch (error) {
+    return res.status(201).json({ error: error.message })
+  }
+});
+
+router.put("/task", async function(req, res) {
+  const { id, status } = req.body
+
+  try {
+    const save_task = await tasks.update(
+      {
+        status: status,
+        updatedAt: new Date()
+      },
+      {
+        where: { id }
+      }
+    )
+
+    return res.status(200).json({
+      message: "Task status is updated",
+      id: save_task.id
+    })
+  } catch (error) {
+    return res.status(201).json({ error: error.message })
+  }
+});
 export default router;
