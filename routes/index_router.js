@@ -1,6 +1,7 @@
 import express from "express";
 import users from "../db/users";
 import tasks from "../db/tasks";
+import sessions from "../db/sessions";
 import multer from "multer";
 const upload = multer({ dest: "public/images/" });
 
@@ -17,7 +18,7 @@ router.post("/signup", async function(req, res) {
       const data = await users.create({
         email: email,
         name: name,
-        pass: password
+        password: password
       });
 
       return res.status(200).json({
@@ -43,13 +44,19 @@ router.post("/login", async function(req, res) {
     if (!check_user) {
       throw new error("Invalid credentials");
     }
+    //returns token and update sessions table
+    const token = Math.random().toString(36).substr(2);
+    const data = await sessions.create({
+      user_id: check_user.id,
+      token: token,
+    });
 
     const tasks_list = await tasks.findAll({
       where: {
         user_id: check_user.id
       }
     });
-    return res.status(200).json({ tasks_list });
+    return res.status(200).json({ tasks_list,token });
   } catch (error) {
     return res.status(201).json({ error: error.message });
   }
